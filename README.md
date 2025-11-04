@@ -329,7 +329,7 @@ public class ASTPrettyPrinter {
             
         } 
         
-        else if (node instanceof IntLit lit) {
+        else if (node instanceof IntLit lit) { 
         
             return lit.val;
             

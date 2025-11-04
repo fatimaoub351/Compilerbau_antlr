@@ -2,6 +2,7 @@
 
 # A3.1: Grammatik
 
+
 grammar gramma;
 
 
@@ -46,6 +47,9 @@ IDENT   : [a-zA-Z_][a-zA-Z0-9_]* ;
 
 
 # A3.2: Pretty Printer
+
+
+// ANTLR grammar: PrettyLang.g4
 
 grammar PrettyLang;
 
@@ -93,7 +97,7 @@ WS  : [ \t\r\n]+ -> skip ;
 
 COMMENT: '#' ~[\r\n]* -> skip ;
 
-
+// Java visitor-based pretty printer
 
 import org.antlr.v4.runtime.*;
 
@@ -134,7 +138,7 @@ public class PrettyPrinter {
     
 }
 
-
+// Visitor implementation
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -249,8 +253,94 @@ public class PrinterVisitor extends PrettyLangBaseVisitor<String> {
     protected String defaultResult() { return ""; }
 }
 
-
-
 # A3.3: AST 
 
+import java.util.stream.Collectors;
+
+public class ASTPrettyPrinter {
+
+    private int indent = 0;
+    
+    private String indentStr() { return "    ".repeat(indent); }
+
+    public String print(AST node) {
+    
+        if (node instanceof Program p) {
+        
+            return p.statements.stream()
+            
+                    .map(this::print)
+                    
+                    .collect(Collectors.joining("\n"));
+                    
+        } else if (node instanceof Assign a) {
+        
+            return indentStr() + a.id + " := " + print(a.expr);
+            
+        } else if (node instanceof IfNode i) {
+        
+            StringBuilder sb = new StringBuilder();
+            
+            sb.append(indentStr()).append("if ").append(print(i.cond)).append(" do\n");
+            
+            indent++;
+            
+            for (AST s : i.thenStmts) sb.append(print(s)).append("\n");
+            
+            indent--;
+            
+            if (!i.elseStmts.isEmpty()) {
+            
+                sb.append(indentStr()).append("else do\n");
+                
+                indent++;
+                
+                for (AST s : i.elseStmts) sb.append(print(s)).append("\n");
+                
+                indent--;
+                
+            }
+            
+            sb.append(indentStr()).append("end");
+            
+            return sb.toString();}
+            
+            else if (node instanceof WhileNode w) {
+        
+            StringBuilder sb = new StringBuilder();
+            
+            sb.append(indentStr()).append("while ").append(print(w.cond)).append(" do\n");
+            
+            indent++;
+            
+            for (AST s : w.body) sb.append(print(s)).append("\n");
+            
+            indent--;
+            
+            sb.append(indentStr()).append("end");
+            
+            return sb.toString();
+            
+        } 
+        
+        else if (node instanceof Var v) {
+        
+            return v.name;
+            
+        } 
+        
+        else if (node instanceof IntLit lit) {
+        
+            return lit.val;
+            
+        } 
+        
+        else if (node instanceof BinOp b) {
+        
+            return print(b.left) + " " + b.op + " " + print(b.right);
+        }
+        
+        return "";
+    }
+}
 
